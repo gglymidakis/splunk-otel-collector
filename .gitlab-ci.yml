@@ -58,6 +58,7 @@ fossa:
   only:
     variables:
       - $CI_COMMIT_BRANCH == "main"
+      - $CI_COMMIT_BRANCH == "sign-ps-installer"
       - $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+.*/
   except:
     - schedules
@@ -377,6 +378,21 @@ sign-msi:
     paths:
       - dist/signed/*.msi
 
+sign-ps-installer:
+  extends:
+    - .trigger-filter
+    - .submit-signing-request
+  stage: sign-packages
+  needs: []
+  dependencies: []
+  variables:
+    ARTIFACT: internal/buildscripts/packaging/installer/install.ps1
+    SIGN_TYPE: WIN
+    DOWNLOAD_DIR: dist/signed
+  artifacts:
+    paths:
+      - dist/signed/install.ps1
+
 verify-signed-packages:
   extends: .trigger-filter
   stage: sign-packages
@@ -391,6 +407,7 @@ verify-signed-packages:
     - sign-rpms
     - sign-msi
     - sign-tar
+    - sign-ps-installer
   script:
     - |
       set -ex
@@ -404,6 +421,10 @@ verify-signed-packages:
           exit 1
         fi
       done
+      if [[ ! -f dist/signed/install.ps1 ]]; then
+        echo "install.ps1 not signed!" >&2
+        exit 1
+      fi
 
 push-linux-image:
   extends: .trigger-filter
