@@ -33,6 +33,16 @@ RUN if [ "$ARCH" = "amd64" ]; then \
         rm -f /usr/lib/splunk-otel-collector/agent-bundle/bin/signalfx-agent \
             /usr/lib/splunk-otel-collector/agent-bundle/bin/agent-status \
             $SMART_AGENT; \
+    elif [ "$ARCH" = "arm64" ] || [ "$ARCH" = "ppc64le" ]; then \
+        SMART_AGENT=signalfx-agent-latest-${ARCH}.tar.gz && \
+        URL=https://github.com/jeffreyc-splunk/signalfx-agent/releases/download/arm64-ppc64le-test/$SMART_AGENT && \
+        cd /usr/lib/splunk-otel-collector && wget "$URL" && tar -xzf $SMART_AGENT && mv signalfx-agent agent-bundle && \
+        # Absolute path of interpreter in smart agent dir is set in dependent binaries
+        # requiring the interpreter location not to change.
+        /usr/lib/splunk-otel-collector/agent-bundle/bin/patch-interpreter /usr/lib/splunk-otel-collector/agent-bundle && \
+        rm -f /usr/lib/splunk-otel-collector/agent-bundle/bin/signalfx-agent \
+            /usr/lib/splunk-otel-collector/agent-bundle/bin/agent-status \
+            $SMART_AGENT; \
     else \
         mkdir -p /usr/lib/splunk-otel-collector/agent-bundle; \
     fi

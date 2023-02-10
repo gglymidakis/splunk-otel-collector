@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - arm64-ppc64le-test
   pull_request:
     paths:
       - '.github/workflows/integration-test.yml'
@@ -25,10 +26,19 @@ jobs:
     name: docker-otelcol
     # Use 20.04.5 until https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/16450 is resolved
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        ARCH: [ "amd64", "arm64", "ppc64le" ]
+      fail-fast: false
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      - name: Set up QEMU
+        if: ${{ matrix.ARCH != 'amd64'}}
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: ${{ matrix.ARCH }}
       - uses: actions/setup-go@v3
         with:
           go-version: 1.19.4
@@ -41,7 +51,7 @@ jobs:
             /home/runner/go/pkg/mod
             /home/runner/.cache/go-build
           key: v1-go-pkg-mod-${{ runner.os }}-${{ hashFiles('**/go.mod', '**/go.sum') }}
-      - run: make docker-otelcol
+      - run: make docker-otelcol ARCH=${{ matrix.ARCH }}
         env:
           DOCKER_BUILDKIT: '1'
       - run: make integration-test
