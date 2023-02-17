@@ -74,6 +74,9 @@ jobs:
             /home/runner/go/pkg/mod
             /home/runner/.cache/go-build
           key: v1-go-pkg-mod-${{ runner.os }}-${{ hashFiles('**/go.mod', '**/go.sum') }}
+      - uses: ScribeMD/docker-cache@0.2.8
+        with:
+          key: docker-cache-${{ runner.os }}-${{ hashFiles('tests/**/Dockerfile') }}
       - uses: actions/download-artifact@v3
         with:
           name: otelcol
